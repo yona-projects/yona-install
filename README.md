@@ -1,6 +1,6 @@
 # yona-install
 
-**Working in plan**
+**now planning..**
 
 Yona installer project
 - Easy to install
