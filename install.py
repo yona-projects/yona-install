@@ -1,8 +1,7 @@
 import requests
 import sys
 import os
-import gzip
-import tarfile
+import zipfile
 import shutil
 import click
 
@@ -37,7 +36,7 @@ yona_src_path.mkdir(exist_ok=True)
 yona_download_assets = last_release.find('details').find_all('a')
 yona_tar_gz = None
 for link in yona_download_assets:
-    if link['href'].endswith('tar.gz'):
+    if link['href'].endswith('mariadb'):
         yona_tar_gz = link['href']
 
 yona_download_full_link = 'https://github.com{0}'
@@ -56,24 +55,26 @@ try:
 except Exception as e:
     click.echo('설치 디렉터리 생성에 실패했습니다. 파일 시스템 권한을 확인하세요')
 
-yona_tar_file = tarfile.open((yona_src_path / os.path.basename(yona_tar_gz)).resolve(), 'r:gz')
-yona_files = yona_tar_file.getmembers()
+yona_zip_file = zipfile.open((yona_src_path / os.path.basename(yona_tar_gz)).resolve(), 'r')
 
-yona_root_dir = yona_files[0].name
-yona_setup_files = yona_files[1:]
-
-for entry in yona_setup_files:
-    extract_path = install_path / entry.name[len(yona_root_dir) + 1:]
-
-    if entry.isdir():
-        extract_path.mkdir(exist_ok=True)
-    else:
-        extract_file = yona_tar_file.extractfile(entry)
-
-        if not extract_file:
-            continue
-
-        shutil.copyfileobj(extract_file, extract_path.open('wb'))
-        extract_path.chmod(entry.mode - 16) 
+yona_files = yona_zip_file.namelist()
+print(yona_files)
+#
+# yona_root_dir = yona_files[0].name
+# yona_setup_files = yona_files[1:]
+#
+# for entry in yona_setup_files:
+#     extract_path = install_path / entry.name[len(yona_root_dir) + 1:]
+#
+#     if entry.isdir():
+#         extract_path.mkdir(exist_ok=True)
+#     else:
+#         extract_file = yona_tar_file.extractfile(entry)
+#
+#         if not extract_file:
+#             continue
+#
+#         shutil.copyfileobj(extract_file, extract_path.open('wb'))
+#         extract_path.chmod(entry.mode - 16)
 
 click.echo("Yona 설치가 완료되었습니다.\nYona와 함께 즐거운 코딩 되세요")
