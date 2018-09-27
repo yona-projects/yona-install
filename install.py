@@ -136,4 +136,11 @@ with Path("/etc/apt/sources.list.d/mariadb.list").open("w") as apt_file:
         distribute_code.decode("utf-8")
     ))
 
+# 소스 저장소 갱신
+subprocess.run(shlex.split("apt update"))
+
+# MariaDB 설치
+mariadb_install = subprocess.Popen(shlex.split("apt install mariadb-server"), stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+print(mariadb_install.stdout)
+
 click.echo("Yona 설치가 완료되었습니다.\nYona와 함께 즐거운 코딩 되세요")
