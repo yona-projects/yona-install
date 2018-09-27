@@ -4,6 +4,9 @@ import os
 import zipfile
 import shutil
 import click
+import stat
+import subprocess
+import shlex
 
 from pathlib import Path
 from bs4 import BeautifulSoup
@@ -36,14 +39,22 @@ yona_src_path.mkdir(exist_ok=True)
 yona_download_assets = last_release.find('details').find_all('a')
 yona_tar_gz = None
 for link in yona_download_assets:
-    if link['href'].endswith('mariadb'):
+    if 'mariadb' in link['href']:
         yona_tar_gz = link['href']
 
 yona_download_full_link = 'https://github.com{0}'
 
-yona_download_req = requests.get(yona_download_full_link.format(yona_tar_gz))
-with (yona_src_path / os.path.basename(yona_tar_gz)).open('wb') as yona_file:
-    yona_file.write(yona_download_req.content)
+yona_download_req = requests.get(yona_download_full_link.format(yona_tar_gz), stream=True)
+yona_setup_file = yona_src_path / os.path.basename(yona_tar_gz)
+
+if not yona_setup_file.exists() or (
+        yona_setup_file.stat()[stat.ST_SIZE] != int(yona_download_req.headers['Content-Length'])):
+    with yona_setup_file.open('wb') as yona_file:
+            download_size = 0
+            for chunk in yona_download_req.iter_content(chunk_size=1024 * 1024 * 1):
+                yona_file.write(chunk)
+                download_size += (1024 * 1024 * 1)
+                print("{0:#,}/{1:#,}".format(download_size, int(yona_download_req.headers['Content-Length'])))
 
 click.echo('Yona 다운로드가 되었습니다')
 
@@ -55,26 +66,74 @@ try:
 except Exception as e:
     click.echo('설치 디렉터리 생성에 실패했습니다. 파일 시스템 권한을 확인하세요')
 
-yona_zip_file = zipfile.open((yona_src_path / os.path.basename(yona_tar_gz)).resolve(), 'r')
+yona_zip_file = zipfile.ZipFile(yona_setup_file.resolve(), 'r')
 
-yona_files = yona_zip_file.namelist()
-print(yona_files)
-#
-# yona_root_dir = yona_files[0].name
-# yona_setup_files = yona_files[1:]
-#
-# for entry in yona_setup_files:
-#     extract_path = install_path / entry.name[len(yona_root_dir) + 1:]
-#
-#     if entry.isdir():
-#         extract_path.mkdir(exist_ok=True)
-#     else:
-#         extract_file = yona_tar_file.extractfile(entry)
-#
-#         if not extract_file:
-#             continue
-#
-#         shutil.copyfileobj(extract_file, extract_path.open('wb'))
-#         extract_path.chmod(entry.mode - 16)
+yona_files = yona_zip_file.infolist()
+
+
+def permission(external_attr):
+    stat_ix = (4, 2, 1)
+
+    user_perm = 0
+    for mode_num, mode in zip(stat_ix, (stat.S_IRUSR, stat.S_IWUSR, stat.S_IXUSR)):
+        if (external_attr & mode) > 0:
+            user_perm += mode_num
+
+    grp_perm = 0
+    for mode_num, mode in zip(stat_ix, (stat.S_IRGRP, stat.S_IWGRP, stat.S_IXGRP)):
+        if (external_attr & mode) > 0:
+            grp_perm += mode_num
+
+    oth_perm = 0
+    for mode_num, mode in zip(stat_ix, (stat.S_IROTH, stat.S_IWOTH, stat.S_IXOTH)):
+        if (external_attr & mode) > 0:
+            oth_perm += mode_num
+
+    return int('0o{0}{1}{2}'.format(user_perm, grp_perm, oth_perm), 8)
+
+
+for entry in yona_files[1:]:
+    entry.filename = entry.filename[entry.filename.find("/") + 1:]
+    yona_zip_file.extract(entry, path=install_path)
+    st_mode = (entry.external_attr >> 16) & 0xFFFF
+    perm = permission(st_mode)
+    (install_path / str(entry.filename)).chmod(perm)
+
+# https://ftp.harukasan.org/mariadb//mariadb-10.3.9/repo/
+# MariaDB 설치
+
+# 운영체제 확인
+lsb_release = subprocess.run(shlex.split("lsb_release -a"), stdout=subprocess.PIPE)
+lsb_release_result = lsb_release.stdout.splitlines()
+
+distribute_os = lsb_release_result[0].split(b"\t")[1]
+if distribute_os not in (b"Ubuntu", b"Debian"):
+    click.echo("우분투 또는 데비안 리눅스가 아닙니다. 설치를 중단합니다")
+    # TODO: 다운로드 받은 요나를 지운다.
+    # TODO: H2 버전을 안내할지 생각해본다.
+
+distribute_code = lsb_release_result[-1].split(b"\t")[1]
+if (distribute_os == b"Ubuntu") and (distribute_code not in (b"artful", b"bionic", b"trusty", b"xenial", b"yakkety", b"zesty")):
+    click.echo("MariaDB 설치가 지원되지 않는 우분투 배포본입니다.")
+    sys.exit(0)
+
+if (distribute_os == b"Debian") and (distribute_code not in (b"jessie", b"sid", b"stretch", b"wheezy")):
+    click.echo("MariaDB 설치가 지원되지 않는 데비안 배포본입니다.")
+    sys.exit(0)
+
+# dirmngr 설치 확인
+dirmngr_installed = subprocess.run(shlex.split("dpkg -l dirmngr"), stdout=subprocess.PIPE)
+if not dirmngr_installed.stdout.splitlines[-1].startswith("ii"):
+    click.echo("dirmngr 패키지가 설치되어 있지 않습니다. dirmngr 패키지를 설치합니다")
+    subprocess.run(shlex.split("sudo apt-get install dirmngr"))
+
+# MariaDB GPG 키를 받아온다.
+subprocess.run(shlex.split("sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xcbcb082a1bb943db"))
+
+with open(Path("/etc/apt/sources.list.d/mariadb.list")) as apt_file:
+    apt_file.write("deb https://ftp.harukasan.org/mariadb//mariadb-10.3.9/repo/{0} {1} main".format(
+        distribute_os.decode("utf-8").lower(),
+        distribute_code.decode("utf-8")
+    ))
 
 click.echo("Yona 설치가 완료되었습니다.\nYona와 함께 즐거운 코딩 되세요")
