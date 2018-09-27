@@ -66,7 +66,7 @@ try:
 except Exception as e:
     click.echo('설치 디렉터리 생성에 실패했습니다. 파일 시스템 권한을 확인하세요')
 
-yona_zip_file = zipfile.ZipFile(yona_setup_file.resolve(), 'r')
+yona_zip_file = zipfile.ZipFile(str(yona_setup_file.resolve()), 'r')
 
 yona_files = yona_zip_file.infolist()
 
@@ -94,7 +94,7 @@ def permission(external_attr):
 
 for entry in yona_files[1:]:
     entry.filename = entry.filename[entry.filename.find("/") + 1:]
-    yona_zip_file.extract(entry, path=install_path)
+    yona_zip_file.extract(entry, path=str(install_path))
     st_mode = (entry.external_attr >> 16) & 0xFFFF
     perm = permission(st_mode)
     (install_path / str(entry.filename)).chmod(perm)
@@ -123,14 +123,14 @@ if (distribute_os == b"Debian") and (distribute_code not in (b"jessie", b"sid", 
 
 # dirmngr 설치 확인
 dirmngr_installed = subprocess.run(shlex.split("dpkg -l dirmngr"), stdout=subprocess.PIPE)
-if not dirmngr_installed.stdout.splitlines[-1].startswith("ii"):
+if not dirmngr_installed.stdout.splitlines()[-1].startswith(b"ii"):
     click.echo("dirmngr 패키지가 설치되어 있지 않습니다. dirmngr 패키지를 설치합니다")
     subprocess.run(shlex.split("sudo apt-get install dirmngr"))
 
 # MariaDB GPG 키를 받아온다.
 subprocess.run(shlex.split("sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xcbcb082a1bb943db"))
 
-with open(Path("/etc/apt/sources.list.d/mariadb.list")) as apt_file:
+with Path("/etc/apt/sources.list.d/mariadb.list").open("w") as apt_file:
     apt_file.write("deb https://ftp.harukasan.org/mariadb//mariadb-10.3.9/repo/{0} {1} main".format(
         distribute_os.decode("utf-8").lower(),
         distribute_code.decode("utf-8")
