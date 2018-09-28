@@ -129,9 +129,10 @@ if not dirmngr_installed.stdout.splitlines()[-1].startswith(b"ii"):
 
 # MariaDB GPG 키를 받아온다.
 subprocess.run(shlex.split("sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xcbcb082a1bb943db"))
+subprocess.run(shlex.split("sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8"))
 
 with Path("/etc/apt/sources.list.d/mariadb.list").open("w") as apt_file:
-    apt_file.write("deb https://ftp.harukasan.org/mariadb//mariadb-10.3.9/repo/{0} {1} main".format(
+    apt_file.write("deb http://ftp.harukasan.org/mariadb//mariadb-10.3.9/repo/{0} {1} main".format(
         distribute_os.decode("utf-8").lower(),
         distribute_code.decode("utf-8")
     ))
@@ -140,7 +141,37 @@ with Path("/etc/apt/sources.list.d/mariadb.list").open("w") as apt_file:
 subprocess.run(shlex.split("apt update"))
 
 # MariaDB 설치
-mariadb_install = subprocess.Popen(shlex.split("apt install mariadb-server"), stdout=subprocess.PIPE, stdin=subprocess.PIPE)
-print(mariadb_install.stdout)
+mariadb_install = subprocess.Popen(shlex.split("apt install mariadb-server"), stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+#mariadb_install_stdout = mariadb_install.stdout.readlines()
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.stdout.readline().decode("utf-8"))
+print(mariadb_install.communicate(b"Y")[1].decode("utf-8"))
 
 click.echo("Yona 설치가 완료되었습니다.\nYona와 함께 즐거운 코딩 되세요")
