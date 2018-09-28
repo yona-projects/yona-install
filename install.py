@@ -130,9 +130,10 @@ if not dirmngr_installed.stdout.splitlines()[-1].startswith(b"ii"):
 
 # MariaDB GPG 키를 받아온다.
 subprocess.run(shlex.split("sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xcbcb082a1bb943db"))
+subprocess.run(shlex.split("sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8"))
 
 with Path("/etc/apt/sources.list.d/mariadb.list").open("w") as apt_file:
-    apt_file.write("deb https://ftp.harukasan.org/mariadb//mariadb-10.3.9/repo/{0} {1} main".format(
+    apt_file.write("deb http://ftp.harukasan.org/mariadb//mariadb-10.3.9/repo/{0} {1} main".format(
         distribute_os.decode("utf-8").lower(),
         distribute_code.decode("utf-8")
     ))
