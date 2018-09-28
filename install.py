@@ -142,7 +142,12 @@ with Path("/etc/apt/sources.list.d/mariadb.list").open("w") as apt_file:
 subprocess.run(shlex.split("apt update"))
 
 # MariaDB 설치
-mariadb_install = subprocess.Popen("apt install mariadb-server", stdout=PIPE, stdin=PIPE, shell=True)
+# export DEBIAN_FRONTEND=noninteractive
+mariadb_install_env = os.environ.copy()
+mariadb_install_env['DEBIAN_FRONTEND'] = 'noninteractive'
+
+mariadb_install = subprocess.Popen("apt install mariadb-server", stdout=PIPE, stdin=PIPE, shell=True,
+                                   env=mariadb_install_env)
 stdout, stderr = mariadb_install.communicate(b"y\n")
 print(stdout)
 
