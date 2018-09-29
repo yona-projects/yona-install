@@ -167,7 +167,7 @@ install_settings = yaml.load(open("settings.yml"))
 
 c = pexpect.spawn('mysql -u root')
 
-c.expect('MariaDB [(none)]>')
+c.expect('.*]>', timeout=60)
 
 # 유저 생성
 c.sendline("create user '{user}'@'{host}' IDENTIFIED BY '{passwd}';".format_map(install_settings['db']))
