@@ -1,0 +1,6 @@
+db:
+  user: yona
+  passwd: yonadan
+  host: localhost
+  name: yona
+  port: 3306

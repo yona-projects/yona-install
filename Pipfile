@@ -9,6 +9,7 @@ lxml = "*"
 "beautifulsoup4" = "*"
 click = "*"
 future = "*"
+pyyaml = "*"
 
 [dev-packages]
 

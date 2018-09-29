@@ -2,11 +2,14 @@ import requests
 import sys
 import os
 import zipfile
-import shutil
+import pexpect
 import click
 import stat
 import subprocess
 import shlex
+import yaml
+import properties
+import time
 
 from pathlib import Path
 from bs4 import BeautifulSoup
@@ -114,7 +117,8 @@ if distribute_os not in (b"Ubuntu", b"Debian"):
     # TODO: H2 버전을 안내할지 생각해본다.
 
 distribute_code = lsb_release_result[-1].split(b"\t")[1]
-if (distribute_os == b"Ubuntu") and (distribute_code not in (b"artful", b"bionic", b"trusty", b"xenial", b"yakkety", b"zesty")):
+if (distribute_os == b"Ubuntu") and (distribute_code not in (b"artful", b"bionic", b"trusty",
+                                                             b"xenial", b"yakkety", b"zesty")):
     click.echo("MariaDB 설치가 지원되지 않는 우분투 배포본입니다.")
     sys.exit(0)
 
@@ -126,11 +130,15 @@ if (distribute_os == b"Debian") and (distribute_code not in (b"jessie", b"sid", 
 dirmngr_installed = subprocess.run(shlex.split("dpkg -l dirmngr"), stdout=subprocess.PIPE)
 if not dirmngr_installed.stdout.splitlines()[-1].startswith(b"ii"):
     click.echo("dirmngr 패키지가 설치되어 있지 않습니다. dirmngr 패키지를 설치합니다")
-    subprocess.run(shlex.split("sudo apt-get install dirmngr"))
+    subprocess.run(shlex.split("sudo apt-get install dirmngr"), stdout=PIPE)
 
 # MariaDB GPG 키를 받아온다.
-subprocess.run(shlex.split("sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xcbcb082a1bb943db"))
-subprocess.run(shlex.split("sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8"))
+subprocess.run(
+    shlex.split("sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xcbcb082a1bb943db"),
+    stdout=PIPE)
+subprocess.run(
+    shlex.split("sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8"),
+    stdout=PIPE)
 
 with Path("/etc/apt/sources.list.d/mariadb.list").open("w") as apt_file:
     apt_file.write("deb http://ftp.harukasan.org/mariadb//mariadb-10.3.9/repo/{0} {1} main".format(
@@ -142,13 +150,68 @@ with Path("/etc/apt/sources.list.d/mariadb.list").open("w") as apt_file:
 subprocess.run(shlex.split("apt update"))
 
 # MariaDB 설치
-# export DEBIAN_FRONTEND=noninteractive
-mariadb_install_env = os.environ.copy()
-mariadb_install_env['DEBIAN_FRONTEND'] = 'noninteractive'
+sysenv = os.environ.copy()
+sysenv['DEBIAN_FRONTEND'] = 'noninteractive'
 
-mariadb_install = subprocess.Popen("apt install mariadb-server", stdout=PIPE, stdin=PIPE, shell=True,
-                                   env=mariadb_install_env)
+openjdk_install = subprocess.Popen("apt install openjdk-9-jre", stdout=PIPE, stdin=PIPE, shell=True, env=sysenv)
+openjdk_install.communicate(b"y\n")
+
+mariadb_install = subprocess.Popen("apt install mariadb-server", stdout=PIPE, stdin=PIPE, shell=True, env=sysenv)
 stdout, stderr = mariadb_install.communicate(b"y\n")
-print(stdout)
+
+click.echo("MariaDB 설치가 완료되었습니다.")
+
+click.echo("MariaDB 설정을 진행합니다.")
+
+install_settings = yaml.load(open("settings.yml"))
+
+c = pexpect.spawnu('mysql -u root')
+
+c.expect('MariaDB [(none)]>')
+
+# 유저 생성
+c.sendline("create user '{user}'@'{host}' IDENTIFIED BY '{passwd}';".format_map(install_settings['db']))
+
+# DB 생성
+c.sendline("set global innodb_file_format = BARRACUDA;")
+c.sendline("set global innodb_file_format_max = BARRACUDA;")
+c.sendline("set global innodb_large_prefix = ON;")
+
+c.sendline("create database {0}".format(install_settings['db']['name']))
+c.sendline("DEFAULT CHARACTER SET utf8mb4")
+c.sendline("DEFAULT COLLATE utf8mb4_bin;")
+
+# 권한 부여
+c.sendline("GRANT ALL ON {name}.* to '{user}'@'{host}';".format_map(install_settings['db']))
+
+c.close()
+
+# MariaDB 설정 파일 생성
+with open("/etc/my.cnf", "w") as my_cnf:
+    my_cnf.write("[client]\n")
+    my_cnf.write("default-character-set=utf8mb4\n")
+    my_cnf.write("\n")
+    my_cnf.write("[mysql]\n")
+    my_cnf.write("default-character-set=utf8mb4\n")
+    my_cnf.write("\n")
+    my_cnf.write("[mysqld]\n")
+    my_cnf.write("collation-server=utf8mb4_unicode_ci\n")
+    my_cnf.write("init-connect='SET NAMES utf8mb4'\n")
+    my_cnf.write("character-set-server=utf8mb4\n")
+    my_cnf.write("lower_case_table_names=1\n")
+    my_cnf.write("innodb_file_format=barracuda\n")
+    my_cnf.write("innodb_large_prefix=on\n")
+
+# DB 데몬 재시작
+subprocess.run("systemctl restart mariadb.service", shell=True)
+
+# Yona 첫 실행
+subprocess.run(install_path / 'bin' / 'yona')
+
+time.sleep(3)
+
+# application.conf 설정
+conf = properties.db_settings(install_path / 'conf' / 'application.conf', install_settings['db'])
+print(conf)
 
 click.echo("Yona 설치가 완료되었습니다.\nYona와 함께 즐거운 코딩 되세요")
