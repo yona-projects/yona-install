@@ -199,14 +199,14 @@ with open("/etc/my.cnf", "w") as my_cnf:
     my_cnf.write("init-connect='SET NAMES utf8mb4'\n")
     my_cnf.write("character-set-server=utf8mb4\n")
     my_cnf.write("lower_case_table_names=1\n")
-    my_cnf.write("innodb_file_format=barracuda\n")
-    my_cnf.write("innodb_large_prefix=on\n")
+    # my_cnf.write("innodb_file_format=barracuda\n")
+    # my_cnf.write("innodb_large_prefix=on\n")
 
 # DB 데몬 재시작
 subprocess.run("systemctl restart mariadb.service", shell=True)
 
 # Yona 첫 실행
-subprocess.run(install_path / 'bin' / 'yona')
+subprocess.run(shlex.split((install_path / 'bin' / 'yona').resolve()))
 
 time.sleep(3)
 
