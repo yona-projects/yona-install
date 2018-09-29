@@ -165,7 +165,7 @@ click.echo("MariaDB 설정을 진행합니다.")
 
 install_settings = yaml.load(open("settings.yml"))
 
-c = pexpect.spawnu('mysql -u root')
+c = pexpect.spawn('mysql -u root')
 
 c.expect('MariaDB [(none)]>')
 
