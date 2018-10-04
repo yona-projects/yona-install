@@ -212,6 +212,7 @@ time.sleep(3)
 
 # application.conf 설정
 conf = properties.db_settings(install_path / 'conf' / 'application.conf', install_settings['db'])
-print(conf)
+with open(str((install_path / 'conf' / 'application.conf').resolve()), 'w') as conf_file:
+    conf_file.writelines(conf)
 
 click.echo("Yona 설치가 완료되었습니다.\nYona와 함께 즐거운 코딩 되세요")
