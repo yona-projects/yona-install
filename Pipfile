@@ -10,6 +10,7 @@ lxml = "*"
 click = "*"
 future = "*"
 pyyaml = "*"
+pexpect = "*"
 
 [dev-packages]
 

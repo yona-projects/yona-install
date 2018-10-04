@@ -147,7 +147,7 @@ with Path("/etc/apt/sources.list.d/mariadb.list").open("w") as apt_file:
     ))
 
 # 소스 저장소 갱신
-subprocess.run(shlex.split("apt update"))
+subprocess.run(shlex.split("apt update"), stdout=PIPE, stderr=PIPE)
 
 # MariaDB 설치
 sysenv = os.environ.copy()

@@ -1,5 +1,5 @@
 def db_settings(application_conf, setting):
-    with open(application_conf, 'r') as conf:
+    with open(str(application_conf.resolve()), 'r') as conf:
         content = conf.readlines()
 
         for line_no, line in enumerate(content.copy()):
