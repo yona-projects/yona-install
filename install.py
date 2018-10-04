@@ -107,7 +107,7 @@ for entry in yona_files[1:]:
 # MariaDB 설치
 
 # 운영체제 확인
-lsb_release = subprocess.run(shlex.split("lsb_release -a"), stdout=subprocess.PIPE)
+lsb_release = subprocess.run(shlex.split("lsb_release -a"), stdout=PIPE, stderr=PIPE)
 lsb_release_result = lsb_release.stdout.splitlines()
 
 distribute_os = lsb_release_result[0].split(b"\t")[1]
@@ -127,18 +127,18 @@ if (distribute_os == b"Debian") and (distribute_code not in (b"jessie", b"sid", 
     sys.exit(0)
 
 # dirmngr 설치 확인
-dirmngr_installed = subprocess.run(shlex.split("dpkg -l dirmngr"), stdout=subprocess.PIPE)
+dirmngr_installed = subprocess.run(shlex.split("dpkg -l dirmngr"), stdout=PIPE, stderr=PIPE)
 if not dirmngr_installed.stdout.splitlines()[-1].startswith(b"ii"):
     click.echo("dirmngr 패키지가 설치되어 있지 않습니다. dirmngr 패키지를 설치합니다")
-    subprocess.run(shlex.split("sudo apt-get install dirmngr"), stdout=PIPE)
+    subprocess.run(shlex.split("sudo apt-get install dirmngr"), stdout=PIPE, stderr=PIPE)
 
 # MariaDB GPG 키를 받아온다.
 subprocess.run(
     shlex.split("sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xcbcb082a1bb943db"),
-    stdout=PIPE)
+    stdout=PIPE, stderr=PIPE)
 subprocess.run(
     shlex.split("sudo apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 0xF1656F24C74CD1D8"),
-    stdout=PIPE)
+    stdout=PIPE, stderr=PIPE)
 
 with Path("/etc/apt/sources.list.d/mariadb.list").open("w") as apt_file:
     apt_file.write("deb http://ftp.harukasan.org/mariadb//mariadb-10.3.9/repo/{0} {1} main".format(
@@ -153,13 +153,13 @@ subprocess.run(shlex.split("apt update"))
 sysenv = os.environ.copy()
 sysenv['DEBIAN_FRONTEND'] = 'noninteractive'
 
+click.echo("OpenJDK를 설치합니다")
 openjdk_install = subprocess.Popen("apt install openjdk-9-jre", stdout=PIPE, stdin=PIPE, shell=True, env=sysenv)
 openjdk_install.communicate(b"y\n")
 
+click.echo("MariaDB를 설치합니다")
 mariadb_install = subprocess.Popen("apt install mariadb-server", stdout=PIPE, stdin=PIPE, shell=True, env=sysenv)
 stdout, stderr = mariadb_install.communicate(b"y\n")
-
-click.echo("MariaDB 설치가 완료되었습니다.")
 
 click.echo("MariaDB 설정을 진행합니다.")
 
@@ -203,10 +203,10 @@ with open("/etc/my.cnf", "w") as my_cnf:
     # my_cnf.write("innodb_large_prefix=on\n")
 
 # DB 데몬 재시작
-subprocess.run("systemctl restart mariadb.service", shell=True)
+subprocess.run("systemctl restart mariadb.service", shell=True, stdout=PIPE, stderr=PIPE)
 
 # Yona 첫 실행
-subprocess.run(shlex.split((install_path / 'bin' / 'yona').resolve()))
+subprocess.run(shlex.split(str((install_path / 'bin' / 'yona').resolve())), shell=True, stdout=PIPE, stderr=PIPE)
 
 time.sleep(3)
 
