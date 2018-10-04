@@ -1,11 +1,11 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "6cf9cbcb44698cf242d979c0050b13bd5d61d05e22232cba04ad7b2000890fe9"
+            "sha256": "b77ba9d5ce8d863bf2a2b097c5dfc2fa3de07125eaacbd848c571a6fcd6451f3"
         },
         "pipfile-spec": 6,
         "requires": {
-            "python_version": "3.5"
+            "python_version": "3.6"
         },
         "sources": [
             {
@@ -96,6 +96,21 @@
             ],
             "index": "pypi",
             "version": "==4.2.5"
+        },
+        "pexpect": {
+            "hashes": [
+                "sha256:2a8e88259839571d1251d278476f3eec5db26deb73a70be5ed5dc5435e418aba",
+                "sha256:3fbd41d4caf27fa4a377bfd16fef87271099463e6fa73e92a52f92dfee5d425b"
+            ],
+            "index": "pypi",
+            "version": "==4.6.0"
+        },
+        "ptyprocess": {
+            "hashes": [
+                "sha256:923f299cc5ad920c68f2bc0bc98b75b9f838b93b599941a6b63ddbc2476394c0",
+                "sha256:d7cc528d76e76342423ca640335bd3633420dc1366f258cb31d05e865ef5ca1f"
+            ],
+            "version": "==0.6.0"
         },
         "pyyaml": {
             "hashes": [
