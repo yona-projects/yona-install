@@ -11,13 +11,13 @@
 1. 리눅스에 root 사용자로 로그인 합니다.
 1. git 명령어를 사용해 yonafi를 다운로드 받습니다.
 
-   ```shell
+   ```console
    # git clone https://github.com/yona/yona-install
    ```
 
 1. 파이썬 가상환경을 만들고 진입합니다.
 
-    ```shell
+    ```console
     # pip3 install pipenv
     # cd yona-install
     # pipenv install
@@ -26,7 +26,7 @@
 
 1. 요나를 설치합니다.
 
-    ```shell
+    ```console
     # python install.py
     최고의 소스코드 관리 프로그램 Yona의 최근 발표 버전은 Yona v1.10.1 Beta build입니다
     설치하시겠습니까? [Y/n] 
