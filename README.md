@@ -12,7 +12,7 @@
 1. git 명령어를 사용해 yonafi를 다운로드 받습니다.
 
    ```console
-   # git clone https://github.com/yona/yona-install
+   # git clone https://github.com/yona-projects/yona-install
    ```
 
 1. 파이썬 가상환경을 만들고 진입합니다.
