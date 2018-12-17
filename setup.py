@@ -16,7 +16,7 @@ dependency_links = []
 
 setup(
     name='yona',
-    url='https://github.com/yona/yona-install',
+    url='https://github.com/yona-projects/yona-install',
     version='1.0',
     description='요나 설치 프로그램',
     author='Ji-ho Persy Lee',
